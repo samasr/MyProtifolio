@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amazon SA Seller Performance Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --header: #1a202c;
+      --r: 8px;
+      --t1: #1a202c;
+      --t2: #718096;
+      --shadow: 0 1px 3px rgba(0,0,0,0.09), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-hover: 0 8px 20px rgba(0,0,0,0.13), 0 2px 6px rgba(0,0,0,0.07);
+      --blue: #378ADD; --red: #E24B4A; --green: #639922; --amber: #BA7517;
+      --green-bg: #f0fff4; --green-fg: #276749;
+      --red-bg:   #fff5f5; --red-fg:   #c53030;
+      --amber-bg: #fffbeb; --amber-fg: #92400e;
+    }
+
+    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--t1); }
+
+    /* header */
+    .ph { background: var(--header); color: #fff; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+    .ph-eye { display: block; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--blue); margin: 0 0 .5rem; }
+    .ph h1 { margin: 0 0 .5rem; font-size: clamp(1.35rem,4vw,2rem); font-weight: 700; line-height: 1.2; }
+    .ph p  { margin: 0; font-size: 14px; color: #a0aec0; }
+
+    /* layout */
+    .dash { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    .sec  { font-size: 11px; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: .08em; margin: 2rem 0 .875rem; }
+
+    /* metric cards */
+    .mg { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+    .mc {
+      background: var(--card); border-radius: var(--r); padding: 1rem;
+      box-shadow: var(--shadow); cursor: default;
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .mc:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .ml { font-size: 11px; font-weight: 500; color: var(--t2); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; }
+    .mv { font-size: 22px; font-weight: 600; color: var(--t1); margin: 0; line-height: 1.1; }
+    .ms { font-size: 12px; color: var(--t2); margin: 4px 0 0; }
+
+    /* chart */
+    .cc { background: var(--card); border-radius: var(--r); padding: 1.25rem; box-shadow: var(--shadow); margin-bottom: .5rem; }
+    .cw { position: relative; width: 100%; }
+    .cl { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--t2); }
+    .cl span { display: flex; align-items: center; gap: 5px; }
+    .sw { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* findings */
+    .fl { display: flex; flex-direction: column; gap: 8px; }
+    .ab {
+      border-left: 3px solid; border-radius: 0 var(--r) var(--r) 0;
+      padding: 10px 14px; font-size: 13px; line-height: 1.5;
+      box-shadow: var(--shadow); cursor: default;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .ab:hover { transform: translateX(4px); box-shadow: var(--shadow-hover); }
+    .ar { border-color: var(--red);   background: var(--red-bg);   color: var(--red-fg); }
+    .ag { border-color: var(--green); background: var(--green-bg); color: var(--green-fg); }
+    .aa { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-fg); }
+
+    /* inventory */
+    .ig { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; }
+    .ic {
+      background: var(--card); border-radius: var(--r); padding: 1rem;
+      box-shadow: var(--shadow);
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .ic:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+    /* tooltip */
+    #tt {
+      position: fixed; z-index: 9999;
+      background: #1a202c; color: #fff;
+      padding: 7px 13px; border-radius: 7px;
+      font-size: 12px; font-family: system-ui, sans-serif;
+      pointer-events: none; white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      opacity: 0; transition: opacity .12s ease;
+      line-height: 1.6;
+    }
+    #tt b { font-weight: 600; }
+
+    footer { text-align: center; padding: 1.5rem; font-size: 12px; color: var(--t2); border-top: 1px solid #e2e8f0; margin-top: 1rem; }
+    .sr { position: absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+    @media (max-width: 480px) {
+      .mg { grid-template-columns: repeat(2,1fr); }
+      .ig { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="tt"></div>
+
+<header class="ph">
+  <span class="ph-eye">Data Analysis · E-commerce</span>
+  <h1>Amazon SA Seller Performance</h1>
+  <p>Settlement analysis · December 2025 – May 2026 · Saudi Arabia marketplace</p>
+</header>
+
+<main class="dash">
+  <h2 class="sr">Amazon SA seller performance dashboard.</h2>
+
+  <p class="sec">Key metrics</p>
+  <div class="mg">
+    <div class="mc">
+      <p class="ml">Total sales (all time)</p>
+      <p class="mv" id="c-sales">SAR 0</p>
+      <p class="ms">91 units ordered</p>
+    </div>
+    <div class="mc">
+      <p class="ml">Net proceeds received</p>
+      <p class="mv" id="c-net">SAR 0</p>
+      <p class="ms">after all Amazon fees</p>
+    </div>
+    <div class="mc">
+      <p class="ml">Est. lost revenue (OOS)</p>
+      <p class="mv" id="c-oos" style="color:var(--red);">SAR 0</p>
+      <p class="ms">42 days out of stock</p>
+    </div>
+    <div class="mc">
+      <p class="ml">Current inventory</p>
+      <p class="mv" id="c-inv">0 units</p>
+      <p class="ms">across 3 SKUs</p>
+    </div>
+    <div class="mc">
+      <p class="ml">Selling price (new)</p>
+      <p class="mv">SAR 32.25</p>
+      <p class="ms">was SAR 24 — +34%</p>
+    </div>
+    <div class="mc">
+      <p class="ml">Best single day</p>
+      <p class="mv" id="c-best">SAR 0</p>
+      <p class="ms">9 Feb 2026 — 27 units</p>
+    </div>
+  </div>
+
+  <p class="sec">Monthly sales trend</p>
+  <div class="cc">
+    <div class="cw" style="height:220px;" id="w-monthly">
+      <svg id="monthly-svg"></svg>
+    </div>
+    <div class="cl">
+      <span><span class="sw" style="background:#378ADD;"></span>In stock</span>
+      <span><span class="sw" style="background:#E24B4A;"></span>Out of stock (March)</span>
+    </div>
+  </div>
+
+  <p class="sec">Settlement period breakdown</p>
+  <div class="cc">
+    <div class="cw" style="height:260px;" id="w-settlement">
+      <svg id="settlement-svg"></svg>
+    </div>
+    <div class="cl">
+      <span><span class="sw" style="background:#378ADD;"></span>Sales</span>
+      <span><span class="sw" style="background:#E24B4A;"></span>Expenses</span>
+      <span><span class="sw" style="background:#639922;"></span>Net proceeds</span>
+    </div>
+  </div>
+
+  <p class="sec">Key findings</p>
+  <div class="fl">
+    <div class="ab ar">Out-of-stock for 42 days (Mar 2 – Apr 13) cost an estimated SAR 679 in lost revenue. This is the single biggest problem.</div>
+    <div class="ab ar">Feb 2–16 period shows −SAR 63.49 net — SAR 181.21 in refunds wiped out the profit. Refund rate was extremely high that period.</div>
+    <div class="ab aa">Amazon fees are consuming 49–65% of gross sales each period. The Feb 19 period had the highest fee ratio at 64.8%.</div>
+    <div class="ab ag">Strong growth trend before stock ran out: Nov SAR 76 → Dec SAR 216 → Jan SAR 648 → Feb SAR 936. The product has real demand.</div>
+    <div class="ab ag">Price increased from SAR 24 to SAR 32.25 (+34%). Post-restock sales confirm buyers still purchasing at the higher price.</div>
+    <div class="ab aa">SKU QX-AYI6-N6NH has 0 units in stock. Act immediately to avoid another stockout.</div>
+  </div>
+
+  <p class="sec">Inventory status <span style="font-weight:400;text-transform:none;letter-spacing:0;">(as of Apr 27, 2026)</span></p>
+  <div class="ig">
+    <div class="ic" style="border-left:3px solid #639922;">
+      <p class="ml">SKU: NP-S9YH</p>
+      <p class="mv" style="font-size:18px;">138 units</p>
+      <p class="ms">SAR 32.25 — healthy</p>
+    </div>
+    <div class="ic" style="border-left:3px solid #BA7517;">
+      <p class="ml">SKU: KC-WM4M</p>
+      <p class="mv" style="font-size:18px;">17 units</p>
+      <p class="ms">SAR 32.25 — reorder soon</p>
+    </div>
+    <div class="ic" style="border-left:3px solid #E24B4A;">
+      <p class="ml">SKU: QX-AYI6</p>
+      <p class="mv" style="font-size:18px;color:#E24B4A;">0 units</p>
+      <p class="ms">SAR 32.25 — OUT OF STOCK</p>
+    </div>
+  </div>
+</main>
+
+<footer>Data sourced from Amazon Seller Central · Saudi Arabia · Analysis period: Nov 2025 – May 2026</footer>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+
+  /* ── Tooltip ── */
+  var tt = document.getElementById('tt');
+
+  function showTip(e, html) {
+    tt.innerHTML = html;
+    tt.style.opacity = '1';
+    moveTip(e);
+  }
+  function moveTip(e) {
+    var x = e.clientX - tt.offsetWidth / 2;
+    var y = e.clientY - tt.offsetHeight - 14;
+    if (x < 4) x = 4;
+    if (x + tt.offsetWidth > window.innerWidth - 4) x = window.innerWidth - tt.offsetWidth - 4;
+    tt.style.left = x + 'px';
+    tt.style.top  = y + 'px';
+  }
+  function hideTip() { tt.style.opacity = '0'; }
+
+  /* ── Counter animation ── */
+  function countUp(el, to, fmt, delayMs) {
+    setTimeout(function () {
+      var start = null;
+      var dur = 1400;
+      function tick(ts) {
+        if (!start) start = ts;
+        var t = Math.min((ts - start) / dur, 1);
+        var ease = 1 - Math.pow(1 - t, 4);
+        el.textContent = fmt(ease * to);
+        if (t < 1) requestAnimationFrame(tick);
+        else el.textContent = fmt(to);
+      }
+      requestAnimationFrame(tick);
+    }, delayMs || 0);
+  }
+
+  /* ── SVG helpers ── */
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function svgTx(tag, attrs, text) {
+    var e = svgEl(tag, attrs);
+    e.textContent = text;
+    return e;
+  }
+  function mkAnim(attr, from, to, dur, begin) {
+    return svgEl('animate', {
+      attributeName: attr,
+      from: String(from), to: String(to),
+      dur: dur + 's',
+      begin: begin + 's',
+      fill: 'freeze',
+      calcMode: 'spline',
+      keyTimes: '0;1',
+      keySplines: '0.22 0.1 0.25 1'
+    });
+  }
+
+  /* ── Y-axis scale ── */
+  function niceStep(range, n) {
+    var rough = range / n;
+    var mag = Math.pow(10, Math.floor(Math.log10(rough || 1)));
+    var mults = [1, 2, 2.5, 5, 10];
+    for (var i = 0; i < mults.length; i++) {
+      if (mag * mults[i] >= rough) return mag * mults[i];
+    }
+    return mag * 10;
+  }
+  function fmtY(v) {
+    if (Math.abs(v) >= 1000) return (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'k';
+    return String(Math.round(v * 10) / 10);
+  }
+  function fmtSAR(v) {
+    return 'SAR ' + (v < 0 ? '−' + Math.abs(v).toFixed(2) : v.toFixed(2));
+  }
+
+  /* ── Draw chart ── */
+  function drawChart(svgId, wrapperId, opts, skipAnim) {
+    var wrapper = document.getElementById(wrapperId);
+    var W = wrapper.offsetWidth || 700;
+    var H = wrapper.offsetHeight || opts.h;
+
+    var pad = { t: 12, r: 12, b: opts.rotateX ? 65 : 36, l: 60 };
+    var cW = W - pad.l - pad.r;
+    var cH = H - pad.t - pad.b;
+
+    var allVals = [];
+    opts.series.forEach(function (s) { allVals = allVals.concat(s.values); });
+    var rawMax = Math.max.apply(null, allVals.concat([0]));
+    var rawMin = Math.min.apply(null, allVals.concat([0]));
+
+    var step = niceStep(rawMax - rawMin || 100, 5);
+    var yMin = Math.floor(rawMin / step) * step;
+    var yMax = Math.ceil(rawMax  / step) * step;
+    var ySpan = yMax - yMin;
+
+    function toY(v) { return pad.t + cH * (1 - (v - yMin) / ySpan); }
+    var zeroY = toY(0);
+
+    var svg = document.getElementById(svgId);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;overflow:visible;';
+    svg.innerHTML = '';
+
+    /* grid + y labels */
+    for (var y = yMin; y <= yMax + 0.001; y = Math.round((y + step) * 1e6) / 1e6) {
+      var py = toY(y);
+      svg.appendChild(svgEl('line', {
+        x1: pad.l, x2: pad.l + cW, y1: py, y2: py,
+        stroke: y === 0 ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.06)',
+        'stroke-width': y === 0 ? 1.5 : 1
+      }));
+      svg.appendChild(svgTx('text', {
+        x: pad.l - 6, y: py + 4, 'text-anchor': 'end',
+        fill: '#718096', 'font-size': 11, 'font-family': 'system-ui,sans-serif'
+      }, fmtY(y)));
+    }
+
+    var nG = opts.labels.length;
+    var nS = opts.series.length;
+    var groupW = cW / nG;
+    var gap = 3;
+    var barW = nS > 1 ? (groupW - gap * (nS + 1)) / nS : groupW * 0.6;
+
+    var allBars = [];
+
+    opts.labels.forEach(function (lbl, gi) {
+      var gx = pad.l + gi * groupW;
+
+      opts.series.forEach(function (s, di) {
+        var v = s.values[gi];
+        var color = Array.isArray(s.color) ? s.color[gi] : s.color;
+
+        var bx   = nS > 1 ? gx + gap * (di + 1) + di * barW : gx + (groupW - barW) / 2;
+        var yv   = toY(v);
+        var bTop = Math.min(zeroY, yv);
+        var bH   = Math.max(Math.abs(zeroY - yv), v !== 0 ? 1 : 0);
+
+        var delay = skipAnim ? 0 : gi * 0.055 + di * 0.02;
+
+        var rect = svgEl('rect', {
+          x: bx,
+          y: skipAnim ? bTop : zeroY,
+          width: barW,
+          height: skipAnim ? bH : 0,
+          fill: color, rx: 3
+        });
+        rect.style.cursor = 'pointer';
+
+        if (!skipAnim && bH > 0) {
+          rect.appendChild(mkAnim('y',      zeroY, bTop, 0.5, delay));
+          rect.appendChild(mkAnim('height', 0,     bH,   0.5, delay));
+        }
+
+        /* hover events */
+        var seriesLabel = s.label || '';
+        (function (rect, lbl, seriesLabel, v) {
+          rect.addEventListener('mouseover', function (e) {
+            allBars.forEach(function (b) { b.style.opacity = b === rect ? '1' : '0.3'; });
+            var tipHtml = '<b>' + lbl + '</b>' +
+              (seriesLabel ? ' · ' + seriesLabel : '') +
+              '<br>' + fmtSAR(v);
+            showTip(e, tipHtml);
+          });
+          rect.addEventListener('mousemove', moveTip);
+          rect.addEventListener('mouseleave', function () {
+            allBars.forEach(function (b) { b.style.opacity = '1'; });
+            hideTip();
+          });
+        })(rect, lbl, seriesLabel, v);
+
+        svg.appendChild(rect);
+        allBars.push(rect);
+      });
+
+      /* x-axis label */
+      var lx = pad.l + gi * groupW + groupW / 2;
+      var ly = H - pad.b + 14;
+      var tAttrs = {
+        x: lx, y: ly, fill: '#718096',
+        'font-size': nS > 1 ? 10 : 12,
+        'font-family': 'system-ui,sans-serif'
+      };
+      if (opts.rotateX) {
+        tAttrs['text-anchor'] = 'end';
+        tAttrs['transform'] = 'rotate(-35,' + lx + ',' + ly + ')';
+      } else {
+        tAttrs['text-anchor'] = 'middle';
+      }
+      svg.appendChild(svgTx('text', tAttrs, lbl));
+    });
+  }
+
+  /* ── Chart data ── */
+  var monthlyOpts = {
+    h: 220,
+    labels: ['Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'],
+    series: [{
+      label: 'Sales',
+      values: [76, 216, 648, 936, 0, 354.75, 32.25],
+      color: ['#378ADD','#378ADD','#378ADD','#378ADD','#E24B4A','#378ADD','#378ADD']
+    }]
+  };
+
+  var settlementOpts = {
+    h: 260,
+    rotateX: true,
+    labels: ['Dec 8–22','Dec 22–Jan 5','Jan 5–19','Jan 19–Feb 2','Feb 2–16','Feb 16–Mar 2','Apr 13–27'],
+    series: [
+      { label: 'Sales',        values: [48, 180, 135.66, 202.64, 271.31, 808.59, 178.68], color: '#378ADD' },
+      { label: 'Expenses',     values: [22.20, 88.82, 82.82, 131.37, 153.59, 459.90, 104.42], color: '#E24B4A' },
+      { label: 'Net proceeds', values: [14.86, 91.18, 52.84, 71.27, -63.49, 285.20, 52.46], color: '#639922' }
+    ]
+  };
+
+  /* ── Init ── */
+  function init() {
+    /* counter animations */
+    countUp(document.getElementById('c-sales'), 2263, function (v) { return 'SAR ' + Math.round(v).toLocaleString('en'); }, 0);
+    countUp(document.getElementById('c-net'),   504,  function (v) { return 'SAR ' + Math.round(v); }, 100);
+    countUp(document.getElementById('c-oos'),   679,  function (v) { return 'SAR ' + Math.round(v); }, 200);
+    countUp(document.getElementById('c-inv'),   155,  function (v) { return Math.round(v) + ' units'; }, 300);
+    countUp(document.getElementById('c-best'),  648,  function (v) { return 'SAR ' + Math.round(v); }, 400);
+
+    /* draw charts with animations */
+    drawChart('monthly-svg',    'w-monthly',    monthlyOpts,    false);
+    drawChart('settlement-svg', 'w-settlement', settlementOpts, false);
+  }
+
+  /* ── Resize ── */
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      drawChart('monthly-svg',    'w-monthly',    monthlyOpts,    true);
+      drawChart('settlement-svg', 'w-settlement', settlementOpts, true);
+    }, 150);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
