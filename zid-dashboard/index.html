@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zid Store Launch Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0eeea;
+  --border: #e2e0db;
+  --border2: #ccc9c2;
+  --text: #1a1917;
+  --muted: #6b6860;
+  --muted2: #9b9890;
+  --green: #2d6a4f;
+  --green-bg: #d8f3dc;
+  --green-light: #b7e4c7;
+  --red: #9b2226;
+  --red-bg: #fce4d6;
+  --amber: #7b5e1a;
+  --amber-bg: #fff3cd;
+  --blue: #1a4b7c;
+  --blue-bg: #dbeafe;
+  --accent: #2d3436;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+
+/* HEADER */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-mark {
+  width: 38px; height: 38px;
+  background: var(--text);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 14px; letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.logo-text { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.logo-sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.04em; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green-bg); color: var(--green);
+  font-size: 0.68rem; font-weight: 500;
+  padding: 5px 10px; border-radius: 20px; letter-spacing: 0.04em;
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.days-counter { font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.days-counter span { color: var(--red); font-size: 1rem; }
+.header-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.header-btn:hover { background: var(--text); color: #fff; border-color: var(--text); }
+.header-btn.share-btn { background: var(--text); color: #fff; border-color: var(--text); }
+.header-btn.share-btn:hover { background: var(--green); border-color: var(--green); }
+.save-indicator { font-size: 0.65rem; color: var(--muted2); letter-spacing: 0.04em; }
+.save-indicator.saved { color: var(--green); }
+
+/* NAV */
+.nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1rem 1.2rem;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+/* MAIN */
+.main { padding: 2rem 2.5rem; max-width: 1280px; margin: 0 auto; }
+
+/* KPI GRID */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1rem;
+  position: relative; overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+.kpi-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.kpi-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -0.03em; margin-bottom: 5px; }
+.kpi-sub { font-size: 0.68rem; color: var(--muted2); }
+.kpi-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* TABS */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* DAY CARDS */
+.day-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.day-card:hover { box-shadow: 0 2px 16px rgba(0,0,0,0.05); }
+.day-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+}
+.day-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  flex-shrink: 0; letter-spacing: 0.02em;
+}
+.day-info { flex: 1; min-width: 0; }
+.day-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.day-sub { font-size: 11px; color: var(--muted); }
+.chevron { font-size: 12px; color: var(--muted2); transition: transform 0.25s; flex-shrink: 0; }
+.day-card.open .chevron { transform: rotate(180deg); }
+.day-body { display: none; padding: 0 18px 14px; border-top: 1px solid var(--border); }
+.day-card.open .day-body { display: block; }
+.day-progress-mini {
+  height: 3px; background: var(--surface2);
+  border-radius: 0 0 0 0; overflow: hidden; margin: 0;
+  transition: background 0.3s;
+}
+.day-progress-mini-bar { height: 100%; background: var(--green); border-radius: 0; transition: width 0.5s ease; }
+
+/* TASKS */
+.task {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 9px 0; border-bottom: 1px solid var(--surface2);
+  cursor: pointer; transition: opacity 0.2s;
+}
+.task:last-child { border-bottom: none; }
+.task:hover { opacity: 0.8; }
+.checkbox {
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface); flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.checkbox.checked { background: var(--green); border-color: var(--green); }
+.checkbox.checked::after {
+  content: ''; width: 9px; height: 5px;
+  border-left: 2px solid #fff; border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px); display: block;
+}
+.task-text { font-size: 12.5px; color: var(--text); line-height: 1.55; transition: all 0.15s; }
+.task-text.done { color: var(--muted2); text-decoration: line-through; }
+
+/* BADGES */
+.badge {
+  display: inline-block; font-size: 10.5px; padding: 3px 9px;
+  border-radius: 20px; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap;
+}
+.b-green { background: var(--green-bg); color: var(--green); }
+.b-red { background: var(--red-bg); color: var(--red); }
+.b-amber { background: var(--amber-bg); color: var(--amber); }
+.b-blue { background: var(--blue-bg); color: var(--blue); }
+.b-gray { background: var(--surface2); color: var(--muted); }
+
+/* PRODUCT GRID */
+.prod-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+.prod-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.prod-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.prod-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: var(--radius) 0 0 var(--radius); }
+.prod-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; padding-left: 8px; line-height: 1.3; }
+.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; font-size: 11.5px; border-radius: 4px; margin-bottom: 2px; }
+.prod-row:hover { background: var(--surface2); }
+.prod-key { color: var(--muted); }
+.prod-val { font-weight: 500; color: var(--text); }
+.prod-margin { margin-top: 8px; padding: 6px 8px; background: var(--surface2); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; }
+.margin-bar-wrap { width: 60%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.margin-bar { height: 100%; border-radius: 3px; background: var(--green); }
+.margin-pct { font-size: 11px; font-weight: 500; color: var(--green); }
+
+/* ROI CALCULATOR */
+.roi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+.roi-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+.roi-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--surface2); font-size: 13px; }
+.roi-row:last-child { border-bottom: none; }
+.roi-label { color: var(--muted); }
+.roi-val { font-weight: 500; color: var(--text); }
+
+select {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 32px 8px 12px;
+  width: 100%; max-width: 420px; cursor: pointer; margin-bottom: 1rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6860' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+select:focus { outline: none; border-color: var(--text); }
+
+/* TRACKING */
+.tracking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+.track-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+.track-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+.progress-item { margin-bottom: 16px; }
+.progress-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.progress-label { font-size: 12px; color: var(--muted); }
+.progress-target { font-size: 12px; font-weight: 500; color: var(--text); }
+.progress-bar-wrap { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.milestone-btn {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 12px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em;
+}
+.milestone-btn:hover { background: var(--text); color: #fff; border-color: var(--text); }
+.milestone-btn.done-btn { background: var(--green-bg); color: var(--green); border-color: var(--green-light); cursor: default; }
+.flag-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--surface2); font-size: 12px; }
+.flag-row:last-child { border-bottom: none; }
+.flag-issue { color: var(--red); font-weight: 500; line-height: 1.4; }
+.flag-action { color: var(--muted); text-align: right; line-height: 1.4; max-width: 48%; }
+
+/* DONE BANNER */
+.done-banner {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 18px; display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px; opacity: 0.8;
+}
+.done-icon { width: 30px; height: 30px; background: var(--green-bg); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.done-text { font-size: 12px; color: var(--muted); }
+.done-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+
+/* COMPARE TABLE */
+.compare-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid var(--surface2); font-size: 12px; }
+.compare-row:last-child { border-bottom: none; }
+.compare-cell { padding: 9px 12px; color: var(--muted); }
+.compare-cell:first-child { color: var(--text); font-weight: 500; }
+.compare-cell.good { color: var(--green); font-weight: 500; }
+.compare-cell.bad { color: var(--red); }
+
+/* BUNDLE TABLE */
+.bundle-table-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0; margin-bottom: 4px; }
+.bundle-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid var(--surface2); font-size: 12px; }
+.bundle-row:last-child { border-bottom: none; }
+.bundle-cell { padding: 9px 12px; color: var(--muted); }
+.bundle-cell:first-child { color: var(--text); }
+.bundle-cell.good { color: var(--green); font-weight: 500; text-align: center; }
+.bundle-cell.center { text-align: center; font-weight: 500; }
+
+/* NOTE BOX */
+.note-box {
+  background: var(--amber-bg); border-left: 3px solid #e9c46a;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px; font-size: 12px; color: var(--amber); line-height: 1.6; margin-bottom: 1rem;
+}
+.note-title { font-weight: 600; margin-bottom: 4px; font-size: 12.5px; }
+
+/* GRIDS */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text); color: #fff;
+  padding: 10px 20px; border-radius: 20px; font-size: 12px;
+  transition: transform 0.3s ease; z-index: 9999; pointer-events: none;
+  letter-spacing: 0.04em;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* RESET BUTTON */
+.reset-btn {
+  font-family: 'DM Mono', monospace; font-size: 0.68rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--red);
+  cursor: pointer; transition: all 0.2s;
+}
+.reset-btn:hover { background: var(--red-bg); border-color: var(--red); }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .main { padding: 1.25rem; }
+  .header { padding: 1rem; }
+  .nav { padding: 0 1rem; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .tracking-grid, .two-col { grid-template-columns: 1fr; }
+  .prod-grid { grid-template-columns: 1fr 1fr; }
+  .flag-action { display: none; }
+  .bundle-row, .bundle-table-header { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .header-right { gap: 6px; }
+  .save-indicator { display: none; }
+  .days-counter { display: none; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .prod-grid { grid-template-columns: 1fr; }
+}
+
+/* PRINT */
+@media print {
+  .header { position: static; box-shadow: none; }
+  .nav { display: none; }
+  .tab-panel { display: block !important; page-break-before: always; }
+  .tab-panel:first-of-type { page-break-before: avoid; }
+  .header-btn, .reset-btn, .milestone-btn { display: none; }
+  body { background: white; }
+  .kpi-card, .roi-card, .track-card, .prod-card, .day-card { box-shadow: none; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">ZID</div>
+    <div>
+      <div class="logo-text">Zid Store Dashboard</div>
+      <div class="logo-sub">Silicone Sealant · Launch Command Center</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>Store Tracking Active</div>
+    <div class="days-counter"><span id="days-left">—</span> days to Saturday</div>
+    <span class="save-indicator" id="save-indicator">No saved progress</span>
+    <button class="header-btn" onclick="window.print()" title="Print dashboard">&#128438; Print</button>
+    <button class="header-btn share-btn" onclick="copyLink()" title="Copy shareable link">&#128279; Copy Link</button>
+    <button class="reset-btn" onclick="confirmReset()" title="Reset all progress">Reset</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchTab('overview',this)">Overview</button>
+  <button class="nav-btn" onclick="switchTab('plan',this)">Weekly Plan</button>
+  <button class="nav-btn" onclick="switchTab('products',this)">9 Products</button>
+  <button class="nav-btn" onclick="switchTab('roi',this)">SAR 2,000 ROI</button>
+  <button class="nav-btn" onclick="switchTab('tracking',this)">Store Tracking</button>
+</nav>
+
+<main class="main">
+
+<!-- ═══ OVERVIEW ═══ -->
+<div id="tab-overview" class="tab-panel active">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-accent" style="background:#1a1917;"></div>
+      <div class="kpi-label">Products to launch</div>
+      <div class="kpi-value">9</div>
+      <div class="kpi-sub">on Zid store</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent" style="background:#9b2226;"></div>
+      <div class="kpi-label">Days until Saturday</div>
+      <div class="kpi-value" id="kpi-days">—</div>
+      <div class="kpi-sub">target: fully live</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent" style="background:#7b5e1a;"></div>
+      <div class="kpi-label">Marketing invested</div>
+      <div class="kpi-value">2,000</div>
+      <div class="kpi-sub">SAR campaign budget</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent" style="background:#2d6a4f;"></div>
+      <div class="kpi-label">Projected monthly profit</div>
+      <div class="kpi-value">1,762</div>
+      <div class="kpi-sub">SAR at target units</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent" style="background:#1a4b7c;"></div>
+      <div class="kpi-label">Phases done</div>
+      <div class="kpi-value">2/4</div>
+      <div class="kpi-sub">phases 1 & 2 complete</div>
+    </div>
+  </div>
+
+  <div class="section-label">Amazon SA vs Zid — why this switch makes sense</div>
+  <div class="roi-card" style="margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;margin-bottom:4px;">
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;">Metric</div>
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:center;">Amazon SA</div>
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:center;">Zid Store</div>
+    </div>
+    <div class="compare-row"><div class="compare-cell">Fees per sale</div><div class="compare-cell bad" style="text-align:center;">49–65% of revenue</div><div class="compare-cell good" style="text-align:center;">Fixed monthly only</div></div>
+    <div class="compare-row"><div class="compare-cell">Brand ownership</div><div class="compare-cell bad" style="text-align:center;">Amazon's brand</div><div class="compare-cell good" style="text-align:center;">Your brand</div></div>
+    <div class="compare-row"><div class="compare-cell">Customer data</div><div class="compare-cell bad" style="text-align:center;">Amazon owns it</div><div class="compare-cell good" style="text-align:center;">You own it</div></div>
+    <div class="compare-row"><div class="compare-cell">Refund control</div><div class="compare-cell bad" style="text-align:center;">Amazon decides</div><div class="compare-cell good" style="text-align:center;">You control policy</div></div>
+    <div class="compare-row"><div class="compare-cell">Sealant profit/unit</div><div class="compare-cell bad" style="text-align:center;">SAR 6.85</div><div class="compare-cell good" style="text-align:center;">SAR 13.50</div></div>
+    <div class="compare-row"><div class="compare-cell">Caulking gun profit/unit</div><div class="compare-cell bad" style="text-align:center;">SAR 8.10</div><div class="compare-cell good" style="text-align:center;">SAR 14.10</div></div>
+  </div>
+
+  <div class="section-label">Progress overview</div>
+  <div class="two-col">
+    <div class="roi-card">
+      <div class="roi-title">Launch phases</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--muted);">Phase 1 — Close Amazon + move stock</span><span class="badge b-green">Done</span></div>
+          <div class="progress-bar-wrap"><div class="progress-bar" style="width:100%;background:var(--green);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--muted);">Phase 2 — Register Zid store</span><span class="badge b-green">Done</span></div>
+          <div class="progress-bar-wrap"><div class="progress-bar" style="width:100%;background:var(--green);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--muted);">Phase 3 — Build store + add 9 products</span><span class="badge b-amber" id="phase3-badge">In progress</span></div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="phase3-bar" style="width:0%;background:#e9c46a;transition:width 0.8s ease;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--muted);">Phase 4 — Launch + track flow</span><span class="badge b-gray" id="phase4-badge">Pending</span></div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="phase4-bar" style="width:0%;background:var(--green);transition:width 0.8s ease;"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-title">Product launch status</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="statusDonut" role="img" aria-label="Product launch status: 1 active, 8 planned."></canvas>
+      </div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:11px;color:var(--muted);">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--green);display:inline-block;"></span>Active (1)</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:#e9c46a;display:inline-block;"></span>Planned (8)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WEEKLY PLAN ═══ -->
+<div id="tab-plan" class="tab-panel">
+  <div class="section-label">Phases 1 & 2 — completed</div>
+  <div class="done-banner"><div class="done-icon">✓</div><div><div class="done-title">Amazon SA store closed · stock removed</div><div class="done-text">Phase 1 complete</div></div><span class="badge b-green" style="margin-left:auto;">Done</span></div>
+  <div class="done-banner"><div class="done-icon">✓</div><div><div class="done-title">Zid store created & registered</div><div class="done-text">Phase 2 complete</div></div><span class="badge b-green" style="margin-left:auto;">Done</span></div>
+
+  <div class="section-label" style="margin-top:1.5rem;">Phase 3 — build the store (today → Thursday)</div>
+  <div id="days-container"></div>
+
+  <div class="section-label" style="margin-top:1.5rem;">Phase 4 — launch & track (Friday → Saturday)</div>
+  <div id="launch-days-container"></div>
+</div>
+
+<!-- ═══ 9 PRODUCTS ═══ -->
+<div id="tab-products" class="tab-panel">
+  <div class="section-label">All 9 products — Zid pricing (no Amazon 30% fee)</div>
+  <div class="prod-grid" id="product-grid"></div>
+
+  <div class="section-label">Bundle opportunities</div>
+  <div class="roi-card">
+    <div class="bundle-table-header">
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;">Bundle</div>
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:center;">Price</div>
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:center;">Cost</div>
+      <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:center;">Profit</div>
+    </div>
+    <div id="bundle-table-body"></div>
+  </div>
+</div>
+
+<!-- ═══ ROI ═══ -->
+<div id="tab-roi" class="tab-panel">
+  <div class="section-label">SAR 2,000 campaign — honest ROI analysis</div>
+  <label style="font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:8px;">Select campaign platform</label>
+  <select id="platform-select" onchange="calcROI()">
+    <option value="snapchat">Snapchat (most effective in Saudi Arabia)</option>
+    <option value="instagram">Instagram</option>
+    <option value="google">Google Search</option>
+    <option value="tiktok">TikTok</option>
+  </select>
+  <div class="roi-card" id="roi-results" style="margin-bottom:1rem;"></div>
+  <div style="position:relative;height:240px;margin-bottom:1.5rem;">
+    <canvas id="roiChart" role="img" aria-label="ROI comparison bar chart across platforms"></canvas>
+  </div>
+  <div class="note-box">
+    <div class="note-title">Reality check for a new store</div>
+    For a brand-new store with 0 reviews, the first campaign builds awareness and trust — not pure profit. Expect week 1 to break even at best. Buyers who see your ad today may return and buy in week 2–3 once they've searched and found you again. Real ROI compounds over the first month.
+  </div>
+  <div class="roi-card">
+    <div class="roi-title">Questions to ask your marketing company</div>
+    <div class="roi-row"><span class="roi-label">What platform and ad format?</span><span class="roi-val" style="font-size:11px;color:var(--muted);">Video performs 3× better than static</span></div>
+    <div class="roi-row"><span class="roi-label">Who is the target audience?</span><span class="roi-val" style="font-size:11px;color:var(--muted);">Men 25–45, Riyadh, construction</span></div>
+    <div class="roi-row"><span class="roi-label">What is the campaign goal?</span><span class="roi-val" style="font-size:11px;color:var(--muted);">Conversions, not just clicks</span></div>
+    <div class="roi-row"><span class="roi-label">Daily spend breakdown?</span><span class="roi-val" style="font-size:11px;color:var(--muted);">SAR 285/day over 7 days</span></div>
+    <div class="roi-row" style="border:none;"><span class="roi-label">Will they provide a performance report?</span><span class="roi-val" style="font-size:11px;color:var(--muted);">CPC, CTR, conversions, ROAS</span></div>
+  </div>
+</div>
+
+<!-- ═══ TRACKING ═══ -->
+<div id="tab-tracking" class="tab-panel">
+  <div class="kpi-grid" style="margin-bottom:1.5rem;">
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--blue);"></div><div class="kpi-label">Target visitors/day</div><div class="kpi-value" style="font-size:1.6rem;">50+</div><div class="kpi-sub">from campaign</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber);"></div><div class="kpi-label">Add-to-cart target</div><div class="kpi-value" style="font-size:1.6rem;">5%+</div><div class="kpi-sub">of visitors</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--green);"></div><div class="kpi-label">Conversion target</div><div class="kpi-value" style="font-size:1.6rem;">1–3%</div><div class="kpi-sub">new store avg</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--text);"></div><div class="kpi-label">Avg order value</div><div class="kpi-value" style="font-size:1.6rem;">35+</div><div class="kpi-sub">SAR (bundle effect)</div></div>
+  </div>
+
+  <div class="section-label">Zid dashboard — check daily</div>
+  <div class="tracking-grid">
+    <div class="track-card">
+      <div class="track-title">Week 1 success benchmarks</div>
+      <div class="progress-item">
+        <div class="progress-header">
+          <span class="progress-label">Orders — week 1 target</span>
+          <span class="progress-target" id="orders-label">0 / 10–20</span>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="orders-bar" style="width:0%;background:var(--blue);"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-header">
+          <span class="progress-label">Revenue — week 1 target</span>
+          <span class="progress-target" id="rev-label">SAR 0 / 400–700</span>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="rev-bar" style="width:0%;background:var(--green);"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-header">
+          <span class="progress-label">Reviews — week 1 target</span>
+          <span class="progress-target" id="rev2-label">0 / 3–5</span>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="rev2-bar" style="width:0%;background:#e9c46a;"></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;margin-top:4px;">Click milestones as you hit them</div>
+      <div class="btn-row" id="milestone-btns"></div>
+    </div>
+    <div class="track-card">
+      <div class="track-title">Daily metrics to monitor in Zid</div>
+      <div class="roi-row"><span class="roi-label">Store visitors</span><span class="badge b-blue">Target: 50+/day</span></div>
+      <div class="roi-row"><span class="roi-label">Add-to-cart rate</span><span class="badge b-blue">Target: 5%+</span></div>
+      <div class="roi-row"><span class="roi-label">Conversion rate</span><span class="badge b-amber">Target: 1–3%</span></div>
+      <div class="roi-row"><span class="roi-label">Average order value</span><span class="badge b-green">Target: SAR 35+</span></div>
+      <div class="roi-row"><span class="roi-label">Top product by views</span><span style="font-size:11px;color:var(--muted);">Shows campaign landing product</span></div>
+      <div class="roi-row" style="border:none;"><span class="roi-label">Abandoned carts</span><span style="font-size:11px;color:var(--muted);">Enable WhatsApp follow-up in Zid</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Red flags — act immediately if you see these</div>
+  <div class="track-card">
+    <div class="flag-row"><div class="flag-issue">0 orders after 3 days of campaign</div><div class="flag-action">Check if store link in the ad is correct</div></div>
+    <div class="flag-row"><div class="flag-issue">High visitors but 0 add-to-cart</div><div class="flag-action">Price too high or photos need improving</div></div>
+    <div class="flag-row"><div class="flag-issue">Add-to-cart but no checkout</div><div class="flag-action">Payment method issue — check Zid payments</div></div>
+    <div class="flag-row" style="border:none;"><div class="flag-issue">Return requests in first week</div><div class="flag-action">Product description mismatch — fix immediately</div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── CONSTANTS ─── */
+const STORAGE_KEY = 'zid_dashboard_v2';
+
+/* ─── DAYS TO SATURDAY ─── */
+(function() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const diff = day === 6 ? 7 : ((6 - day + 7) % 7) || 7;
+  document.getElementById('days-left').textContent = diff;
+  document.getElementById('kpi-days').textContent = diff;
+})();
+
+/* ─── TOAST ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ─── COPY LINK ─── */
+function copyLink() {
+  const url = window.location.href.split('?')[0];
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard!'));
+}
+
+/* ─── STORAGE ─── */
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const now = new Date();
+  const t = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  const ind = document.getElementById('save-indicator');
+  ind.textContent = 'Saved ' + t;
+  ind.className = 'save-indicator saved';
+}
+
+const state = loadState();
+if (Object.keys(state).length) {
+  const ind = document.getElementById('save-indicator');
+  ind.textContent = 'Progress loaded';
+  ind.className = 'save-indicator saved';
+}
+
+/* ─── TAB SWITCHING ─── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'roi') { setTimeout(calcROI, 50); setTimeout(buildROIChart, 80); }
+}
+
+/* ─── WEEKLY PLAN DATA ─── */
+const days = [
+  { id:'sun', label:'Sun', color:'#9b2226', bg:'#fce4d6', title:'Sunday — store setup & first 3 products', sub:'5 tasks · highest priority', badge:'Today', bclass:'b-red', phase:3,
+    tasks: ['Choose your Zid store theme — go to زد → الثيمات → pick a clean, professional hardware/tools theme',
+            'Upload store logo and set brand colors — makes the store look professional instantly',
+            'Add Product 1: Silicone Sealant 300ml — upload photos, Arabic + English description, price SAR 28',
+            'Add Product 2: Caulking Gun (Manual) — price SAR 22, use photos from your sample testing',
+            'Connect your payment method — Mada, Visa, or STC Pay through Zid Payments dashboard'] },
+  { id:'mon', label:'Mon', color:'#7b5e1a', bg:'#fff3cd', title:'Monday — 3 more products + shipping setup', sub:'5 tasks', badge:'Monday', bclass:'b-amber', phase:3,
+    tasks: ['Add Product 3: Masking Tape 48mm × 25m — price SAR 14, emphasize "for silicone sealant application"',
+            'Add Product 4: PTFE Thread Seal Tape 12m — price SAR 10, your best margin product (82%)',
+            'Add Product 5: Wall Plug Anchors 50pcs — price SAR 13, add bundle suggestion on product page',
+            'Set up shipping zones in Zid — Riyadh same-day first, then all KSA 2–3 days',
+            'Connect Zid to your WhatsApp Business number — every order notification goes to WhatsApp'] },
+  { id:'tue', label:'Tue', color:'#7b5e1a', bg:'#fff3cd', title:'Tuesday — remaining 4 products + bundles', sub:'5 tasks', badge:'Tuesday', bclass:'b-amber', phase:3,
+    tasks: ['Add Product 6: Silicone Grease 100ml — price SAR 24, target plumbing and construction buyers',
+            'Add Product 7: Nitrile Gloves Box 100ct — price SAR 20, label as "construction grade" not medical',
+            'Add Product 8: Foam Backer Rod 10m Roll — price SAR 19, only seller in this category',
+            'Add Product 9: Silicone Smoothing Tool Set — price SAR 12, show before/after application photos',
+            'Create 3 bundle products: Starter Kit SAR 44, Bathroom Repair Kit SAR 52, Contractor Kit SAR 95'] },
+  { id:'wed', label:'Wed', color:'#1a4b7c', bg:'#dbeafe', title:'Wednesday — SEO, Arabic content & test order', sub:'4 tasks', badge:'Wednesday', bclass:'b-blue', phase:3,
+    tasks: ['Optimize all Arabic titles — add: سيليكون، مانع تسرب، مسدس السيليكون، شريط لاصق for each product',
+            'Place a test order yourself — full buyer journey: find → cart → checkout → pay → confirm',
+            'Set up return & refund policy in Zid settings — clear policy reduces disputes',
+            'Brief your marketing company on your Zid store link and 3 hero products for the SAR 2,000 campaign'] },
+  { id:'thu', label:'Thu', color:'#1a4b7c', bg:'#dbeafe', title:'Thursday — soft launch & social setup', sub:'4 tasks', badge:'Thursday', bclass:'b-blue', phase:3,
+    tasks: ['Share store link to personal and business WhatsApp contacts — first 10 orders come from people you know',
+            'Create Instagram Business account and post 3 product photos — sealant in use, before/after, bathroom kit',
+            "Add store to Zid's مزيد marketplace for extra exposure from Zid's own traffic",
+            'Confirm marketing company will launch campaign by Saturday — share your Zid link and product images'] },
+];
+
+const launchDays = [
+  { id:'fri', label:'Fri', color:'#2d6a4f', bg:'#d8f3dc', title:'Friday — final review & go live', sub:'3 tasks', badge:'Friday', bclass:'b-green', phase:4,
+    tasks: ['Full store walkthrough — check every product page, all prices, all photos, Arabic + English correct',
+            'Make sure inventory quantities are entered correctly in Zid for all 9 products',
+            'Set store to "Published" and Live — share link publicly on all social accounts'] },
+  { id:'sat', label:'Sat', color:'#2d6a4f', bg:'#d8f3dc', title:'Saturday — LAUNCH DAY + start tracking', sub:'Store live · campaign running · tracking begins', badge:'Target date', bclass:'b-green', highlight:true, phase:4,
+    tasks: ['Marketing campaign goes live — confirm with marketing company it has launched',
+            'Open Zid dashboard and start monitoring: visitors, add-to-cart, orders, conversion rate in real time',
+            'Record Day 1 metrics in your Excel tracker — this is your baseline for all future comparisons'] },
+];
+
+const allDays = [...days, ...launchDays];
+
+/* ─── PHASE PROGRESS CALCULATION ─── */
+function recalcPhaseProgress() {
+  const phase3Tasks = allDays.filter(d => d.phase === 3).flatMap(d => d.tasks.map((_,i) => d.id + '_' + i));
+  const phase4Tasks = allDays.filter(d => d.phase === 4).flatMap(d => d.tasks.map((_,i) => d.id + '_' + i));
+  const p3done = phase3Tasks.filter(k => state['task_' + k]).length;
+  const p4done = phase4Tasks.filter(k => state['task_' + k]).length;
+  const p3pct = phase3Tasks.length ? Math.round(p3done / phase3Tasks.length * 100) : 0;
+  const p4pct = phase4Tasks.length ? Math.round(p4done / phase4Tasks.length * 100) : 0;
+
+  const bar3 = document.getElementById('phase3-bar');
+  const bar4 = document.getElementById('phase4-bar');
+  if (bar3) { bar3.style.width = p3pct + '%'; bar3.style.background = p3pct === 100 ? 'var(--green)' : '#e9c46a'; }
+  if (bar4) { bar4.style.width = p4pct + '%'; }
+
+  const badge3 = document.getElementById('phase3-badge');
+  const badge4 = document.getElementById('phase4-badge');
+  if (badge3) {
+    if (p3pct === 100) { badge3.textContent = 'Done'; badge3.className = 'badge b-green'; }
+    else if (p3pct > 0) { badge3.textContent = p3pct + '% done'; badge3.className = 'badge b-amber'; }
+    else { badge3.textContent = 'In progress'; badge3.className = 'badge b-amber'; }
+  }
+  if (badge4) {
+    if (p4pct === 100) { badge4.textContent = 'Done'; badge4.className = 'badge b-green'; }
+    else if (p4pct > 0) { badge4.textContent = p4pct + '% done'; badge4.className = 'badge b-amber'; }
+    else { badge4.textContent = 'Pending'; badge4.className = 'badge b-gray'; }
+  }
+}
+
+/* ─── BUILD DAY CARDS ─── */
+function buildDays(data, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = data.map(d => {
+    const doneCount = d.tasks.filter((_,i) => state['task_' + d.id + '_' + i]).length;
+    const pct = Math.round(doneCount / d.tasks.length * 100);
+    return `
+    <div class="day-card ${d.highlight ? '' : ''}" id="card-${d.id}" ${d.highlight ? 'style="border:2px solid var(--green);"' : ''}>
+      <div class="day-progress-mini"><div class="day-progress-mini-bar" id="mini-${d.id}" style="width:${pct}%;"></div></div>
+      <div class="day-header" onclick="toggleDay('card-${d.id}')">
+        <div class="day-icon" style="background:${d.bg};color:${d.color};">${d.label}</div>
+        <div class="day-info">
+          <div class="day-title">${d.title}</div>
+          <div class="day-sub">${doneCount}/${d.tasks.length} tasks · ${d.sub.split('·').pop().trim()}</div>
+        </div>
+        <span class="badge ${d.bclass}">${d.badge}</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="day-body">
+        ${d.tasks.map((t, i) => {
+          const checked = state['task_' + d.id + '_' + i] ? 'checked' : '';
+          return `<div class="task" onclick="toggleTask(this,'${d.id}',${i})">
+            <div class="checkbox ${checked}"></div>
+            <div class="task-text ${checked ? 'done' : ''}">${t}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+buildDays(days, 'days-container');
+buildDays(launchDays, 'launch-days-container');
+recalcPhaseProgress();
+
+function toggleDay(cardId) {
+  document.getElementById(cardId).classList.toggle('open');
+}
+
+function toggleTask(taskEl, dayId, idx) {
+  const key = 'task_' + dayId + '_' + idx;
+  const cb = taskEl.querySelector('.checkbox');
+  const txt = taskEl.querySelector('.task-text');
+  const isChecked = cb.classList.toggle('checked');
+  txt.classList.toggle('done', isChecked);
+  state[key] = isChecked;
+  saveState(state);
+
+  // update mini progress bar
+  const dayData = allDays.find(d => d.id === dayId);
+  if (dayData) {
+    const done = dayData.tasks.filter((_,i) => state['task_' + dayId + '_' + i]).length;
+    const pct = Math.round(done / dayData.tasks.length * 100);
+    const mini = document.getElementById('mini-' + dayId);
+    if (mini) mini.style.width = pct + '%';
+    // update subtitle
+    const card = document.getElementById('card-' + dayId);
+    if (card) {
+      const sub = card.querySelector('.day-sub');
+      if (sub) sub.textContent = done + '/' + dayData.tasks.length + ' tasks · ' + dayData.sub.split('·').pop().trim();
+    }
+  }
+  recalcPhaseProgress();
+}
+
+/* ─── PRODUCTS ─── */
+const products = [
+  { name:'Silicone Sealant 300ml',     cost:'7.00',  price:'28.00', profit:'13.50', margin:48, accentColor:'var(--green)', badge:'Hero',        bclass:'b-green' },
+  { name:'Caulking Gun (Manual)',       cost:'4.60',  price:'22.00', profit:'14.10', margin:64, accentColor:'var(--blue)',  badge:'Launch 1st',  bclass:'b-green' },
+  { name:'Masking Tape 48mm × 25m',    cost:'1.67',  price:'14.00', profit:'10.30', margin:74, accentColor:'var(--green)', badge:'High volume', bclass:'b-green' },
+  { name:'PTFE Thread Seal Tape 12m',  cost:'0.80',  price:'10.00', profit:'8.20',  margin:82, accentColor:'var(--amber)', badge:'Best margin', bclass:'b-blue'  },
+  { name:'Wall Plug Anchors (50pcs)',   cost:'2.00',  price:'13.00', profit:'9.50',  margin:73, accentColor:'var(--amber)', badge:'Bundle',      bclass:'b-amber' },
+  { name:'Silicone Grease 100ml',      cost:'6.50',  price:'24.00', profit:'15.50', margin:65, accentColor:'var(--muted)', badge:'Add-on',      bclass:'b-amber' },
+  { name:'Nitrile Gloves 100ct',       cost:'7.50',  price:'20.00', profit:'10.50', margin:53, accentColor:'var(--muted)', badge:'Bundle',      bclass:'b-amber' },
+  { name:'Foam Backer Rod 10m Roll',   cost:'5.00',  price:'19.00', profit:'12.50', margin:66, accentColor:'var(--blue)',  badge:'First mover', bclass:'b-blue'  },
+  { name:'Silicone Smoothing Tool',    cost:'2.00',  price:'12.00', profit:'8.50',  margin:71, accentColor:'var(--muted)', badge:'Bundle',      bclass:'b-amber' },
+];
+
+document.getElementById('product-grid').innerHTML = products.map(p => `
+  <div class="prod-card">
+    <div class="prod-accent" style="background:${p.accentColor};"></div>
+    <div class="prod-name">${p.name}</div>
+    <div class="prod-row"><span class="prod-key">Supplier cost</span><span class="prod-val">SAR ${p.cost}</span></div>
+    <div class="prod-row"><span class="prod-key">Zid price</span><span class="prod-val">SAR ${p.price}</span></div>
+    <div class="prod-row"><span class="prod-key">Profit/unit</span><span class="prod-val" style="color:var(--green);">~SAR ${p.profit}</span></div>
+    <div class="prod-margin">
+      <div class="margin-bar-wrap"><div class="margin-bar" style="width:${p.margin}%;"></div></div>
+      <span class="margin-pct">${p.margin}%</span>
+    </div>
+    <div style="margin-top:8px;"><span class="badge ${p.bclass}">${p.badge}</span></div>
+  </div>
+`).join('');
+
+/* ─── BUNDLE TABLE ─── */
+const bundles = [
+  { name:'Starter Kit',             contents:'Sealant + Gun',                              price:'44', cost:'8.67',  profit:'~21' },
+  { name:'Bathroom Repair Kit ⭐',  contents:'Sealant + Gun + Tape + Tool + Gloves',        price:'52', cost:'15.27', profit:'~21' },
+  { name:'Contractor Kit',          contents:'3× Sealant + Gun + Rod',                     price:'95', cost:'32.45', profit:'~34' },
+  { name:'Pro Sealing Kit',         contents:'Sealant + Gun + Tape',                       price:'42', cost:'13.72', profit:'~15' },
+];
+document.getElementById('bundle-table-body').innerHTML = bundles.map(b => `
+  <div class="bundle-row">
+    <div class="bundle-cell">
+      <div style="font-size:12.5px;font-weight:500;">${b.name}</div>
+      <div style="font-size:11px;color:var(--muted2);">${b.contents}</div>
+    </div>
+    <div class="bundle-cell center">SAR ${b.price}</div>
+    <div class="bundle-cell center">SAR ${b.cost}</div>
+    <div class="bundle-cell good">SAR ${b.profit}</div>
+  </div>
+`).join('');
+
+/* ─── ROI CALCULATOR ─── */
+const platforms = {
+  snapchat:  { cpc:[0.8,1.5],  cvr:[1.5,3.5], label:'Snapchat',      note:'Best for Saudi Arabia — highest daily active users among Saudi millennials and professionals.' },
+  instagram: { cpc:[1.5,3.0],  cvr:[1.0,2.5], label:'Instagram',     note:'Strong visual platform — product reels and before/after content converts well for hardware.' },
+  google:    { cpc:[2.0,4.0],  cvr:[3.0,5.0], label:'Google Search', note:'Best ROI for buyers already searching — "silicone sealant" and "مسدس سيليكون" search intent is high.' },
+  tiktok:    { cpc:[0.5,1.2],  cvr:[0.5,2.0], label:'TikTok',        note:'Growing fast in Saudi Arabia — requires short engaging video of product in use.' },
+};
+
+function calcROI() {
+  const p = platforms[document.getElementById('platform-select').value];
+  const budget = 2000, aov = 35, profit = 12;
+  const minClicks = Math.round(budget / p.cpc[1]);
+  const maxClicks = Math.round(budget / p.cpc[0]);
+  const minOrders = Math.round(minClicks * p.cvr[0] / 100);
+  const maxOrders = Math.round(maxClicks * p.cvr[1] / 100);
+  const minRev = (minOrders * aov).toFixed(0);
+  const maxRev = (maxOrders * aov).toFixed(0);
+  const minNet = (minOrders * profit - budget).toFixed(0);
+  const maxNet = (maxOrders * profit - budget).toFixed(0);
+  const breakEven = Math.ceil(budget / profit);
+  const isProfit = parseInt(maxNet) > 0;
+  document.getElementById('roi-results').innerHTML = `
+    <div class="roi-title">${p.label} — projected campaign outcome</div>
+    <div class="roi-row"><span class="roi-label">Budget</span><span class="roi-val">SAR 2,000</span></div>
+    <div class="roi-row"><span class="roi-label">Estimated clicks</span><span class="roi-val">${minClicks.toLocaleString()} – ${maxClicks.toLocaleString()} visitors</span></div>
+    <div class="roi-row"><span class="roi-label">Expected orders</span><span class="roi-val">${minOrders} – ${maxOrders} orders</span></div>
+    <div class="roi-row"><span class="roi-label">Expected revenue</span><span class="roi-val">SAR ${parseInt(minRev).toLocaleString()} – ${parseInt(maxRev).toLocaleString()}</span></div>
+    <div class="roi-row"><span class="roi-label">Net after campaign cost</span><span class="roi-val" style="color:${isProfit?'var(--green)':'var(--red)'};">SAR ${parseInt(minNet).toLocaleString()} – ${parseInt(maxNet).toLocaleString()}</span></div>
+    <div class="roi-row"><span class="roi-label">Break-even point</span><span class="roi-val">${breakEven} orders needed</span></div>
+    <div class="roi-row" style="border:none;"><span class="roi-label">Likely outcome for new store</span><span class="badge ${isProfit?'b-green':'b-amber'}">${isProfit?'Profitable':'Break even / slight loss'}</span></div>
+    <div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--surface2);">${p.note}</div>
+  `;
+}
+calcROI();
+
+let roiChart = null;
+function buildROIChart() {
+  const ctx = document.getElementById('roiChart');
+  if (!ctx) return;
+  if (roiChart) { roiChart.destroy(); roiChart = null; }
+  const data = [
+    { label:'Snapchat',  minO:20,  maxO:131, color:'#FFBA08' },
+    { label:'Instagram', minO:7,   maxO:33,  color:'#E1306C' },
+    { label:'Google',    minO:15,  maxO:50,  color:'#4285F4' },
+    { label:'TikTok',    minO:8,   maxO:133, color:'#2d3436' },
+  ];
+  roiChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.label),
+      datasets: [
+        { label:'Min orders', data:data.map(d=>d.minO), backgroundColor:data.map(d=>d.color+'66'), borderRadius:4, borderSkipped:false },
+        { label:'Max orders', data:data.map(d=>d.maxO), backgroundColor:data.map(d=>d.color),      borderRadius:4, borderSkipped:false },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ callbacks:{ label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+' orders' },
+          backgroundColor:'#fff', titleColor:'#1a1917', bodyColor:'#6b6860', borderColor:'#e2e0db', borderWidth:1 }
+      },
+      scales: {
+        x:{ ticks:{ color:'#6b6860', font:{size:12,family:'DM Mono'} }, grid:{ display:false } },
+        y:{ ticks:{ color:'#6b6860', font:{size:11,family:'DM Mono'}, callback:v=>v+' orders' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ─── DONUT CHART ─── */
+new Chart(document.getElementById('statusDonut'), {
+  type:'doughnut',
+  data:{ labels:['Active','Planned'], datasets:[{ data:[1,8], backgroundColor:['#2d6a4f','#e9c46a'], borderWidth:0, hoverOffset:4 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'72%',
+    plugins:{ legend:{ display:false },
+      tooltip:{ callbacks:{ label:ctx=>ctx.label+': '+ctx.parsed+' products' },
+        backgroundColor:'#fff', titleColor:'#1a1917', bodyColor:'#6b6860', borderColor:'#e2e0db', borderWidth:1 } }
+  }
+});
+
+/* ─── MILESTONES ─── */
+const milestones = [
+  { id:'m1', barId:'orders-bar', labelId:'orders-label', pct:50,  label:'5 orders',   text:'5 orders done' },
+  { id:'m2', barId:'orders-bar', labelId:'orders-label', pct:100, label:'10+ orders', text:'10+ orders done' },
+  { id:'m3', barId:'rev-bar',    labelId:'rev-label',    pct:57,  label:'SAR 400',    text:'SAR 400 revenue' },
+  { id:'m4', barId:'rev-bar',    labelId:'rev-label',    pct:100, label:'SAR 700',    text:'SAR 700 revenue' },
+  { id:'m5', barId:'rev2-bar',   labelId:'rev2-label',   pct:60,  label:'3 reviews',  text:'3 reviews' },
+  { id:'m6', barId:'rev2-bar',   labelId:'rev2-label',   pct:100, label:'5 reviews',  text:'5 reviews' },
+];
+
+const labelTexts = {
+  'orders-label':{ base:'0 / 10–20', m1:'5 / 10–20', m2:'10+ / 10–20' },
+  'rev-label':   { base:'SAR 0 / 400–700', m3:'SAR 400 / 400–700', m4:'SAR 700 / 400–700' },
+  'rev2-label':  { base:'0 / 3–5', m5:'3 / 3–5', m6:'5 / 3–5' },
+};
+
+document.getElementById('milestone-btns').innerHTML = milestones.map(m => {
+  const done = state['milestone_' + m.id];
+  return `<button class="milestone-btn ${done?'done-btn':''}" id="mbtn-${m.id}" onclick="hitMilestone('${m.id}')" ${done?'disabled':''}>${m.text}</button>`;
+}).join('');
+
+// restore milestone bar states
+milestones.forEach(m => {
+  if (state['milestone_' + m.id]) {
+    const bar = document.getElementById(m.barId);
+    if (bar) bar.style.width = m.pct + '%';
+  }
+});
+
+function hitMilestone(id) {
+  const m = milestones.find(x => x.id === id);
+  if (!m) return;
+  const bar = document.getElementById(m.barId);
+  if (bar) bar.style.width = m.pct + '%';
+  const btn = document.getElementById('mbtn-' + id);
+  if (btn) { btn.classList.add('done-btn'); btn.disabled = true; }
+  state['milestone_' + id] = true;
+  saveState(state);
+  showToast('Milestone hit: ' + m.label + ' ✓');
+}
+
+/* ─── RESET ─── */
+function confirmReset() {
+  if (confirm('Reset all saved progress? This clears all checkboxes and milestones.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+</script>
+</body>
+</html>
